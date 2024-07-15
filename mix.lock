@@ -1,3 +1,3 @@
 %{
-  "chorex": {:hex, :chorex, "0.2.0", "a18705276d1bc20e4cd37671cdc31edee339c6b164caee8854fab45ae0e49272", [:mix], [], "hexpm", "d367f90aed92171f21ec384167e88da7bd82ff7427f02ea75e068a159dfae633"},
+  "chorex": {:git, "https://github.com/utahplt/chorex.git", "9b22946a64b75b3b8479f342c33774c24f91a6c2", []},
 }
