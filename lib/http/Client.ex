@@ -4,7 +4,7 @@ defmodule Http.Client do
   def get_headers() do
     receive do
       # This has to come in from elsewhere
-	  {:socket, s} ->
+      {:socket, s} ->
         read_headers(s)
     end
   end
@@ -13,14 +13,14 @@ defmodule Http.Client do
   end
 
   def finish_request(nil) do
-	# close request
+    # close request
   end
 
   #
   # Helper functions
   #
 
-  def read_headers(sock) do
+  def read_headers(_sock) do
     # ...
   end
 end

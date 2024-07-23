@@ -5,10 +5,10 @@ defmodule Http.Server do
   end
 
   def accept?(_headers) do
-	false
+    false
   end
 
   def accept_length(_headers) do
-	42
+    42
   end
 end

@@ -1,3 +1,3 @@
 %{
-  "chorex": {:git, "https://github.com/utahplt/chorex.git", "9b22946a64b75b3b8479f342c33774c24f91a6c2", []},
+  "chorex": {:git, "https://github.com/utahplt/chorex.git", "09e22a6c0402798263d2d92d71ae692258715976", []},
 }
