@@ -14,6 +14,8 @@ defmodule Tcp.HandlerChor do
           Handler[R] ~> TcpClient
           Handler.fmt_reply(resp) ~> TcpClient.(resp)
           TcpClient.send_over_socket(sock, resp)
+          TcpClient.shutdown(sock)
+          Handler.ack_shutdown()
         end
       end
     end
