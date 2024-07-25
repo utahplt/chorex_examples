@@ -3,6 +3,7 @@ defmodule Tcp.HandlerImpl do
 
   def run({:error, reason}) do
     IO.inspect(reason, label: "[handler] error reason")
+    {:halt, ""}
   end
 
   def run({:ok, "stop\n"}) do
