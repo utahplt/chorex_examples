@@ -7,9 +7,15 @@ defmodule Zkp.ZkpChor do
       Verifier.get_params() ~> Prover.({g, p})
       with Prover.(token) <- Prover.gen_verification_token(username, password, g, p) do
         Prover.({username, token}) ~> Verifier.({id, token})
-        Verifier.register(id, token)
-        Verifier.({:ok, id})
-        Prover.(:ok)
+        if Verifier.register(id, token) do
+          Verifier[L] ~> Prover
+          Verifier.({:ok, id})
+          Prover.(:ok)
+        else
+          Verifier[R] ~> Prover
+          Verifier.(:failed)
+          Prover.(:failed)
+        end
       end
     end
 

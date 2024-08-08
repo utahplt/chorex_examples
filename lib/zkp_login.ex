@@ -8,8 +8,8 @@ defmodule ZkpLogin do
   end
 
   def register() do
-    username = IO.gets("[New User] username: ")
-    passwd = IO.gets("[New User] password: ")
+    username = IO.gets("[New User] username: ") |> String.trim()
+    passwd = IO.gets("[New User] password: ") |> String.trim()
 
     Chorex.start(Zkp.ZkpChor.Chorex,
       %{ Prover => Zkp.LogProver,
@@ -18,10 +18,11 @@ defmodule ZkpLogin do
 
     receive do
       {:chorex_return, Verifier, {:ok, userid}} -> IO.puts("User #{userid} registered.")
+      {:chorex_return, Verifier, :failed} -> IO.puts("User #{username} not registered.")
     end
 
     receive do
-      {:chorex_return, Prover, :ok} -> IO.puts("Prover finished.")
+      {:chorex_return, Prover, _} -> IO.puts("Prover finished.")
     end
   end
 

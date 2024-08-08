@@ -3,12 +3,12 @@ defmodule Zkp.LogProver do
 
   @impl true
   def get_ident() do
-    IO.gets("Username: ")
+    IO.gets("[Login] username: ") |> String.trim()
   end
 
   @impl true
   def get_secret(username) do
-    passwd = IO.gets("Password: ")
+    passwd = IO.gets("[Login] password: ") |> String.trim()
     :crypto.hash(:sha256, passwd <> username)
   end
 
@@ -19,6 +19,6 @@ defmodule Zkp.LogProver do
 
   @impl true
   def notify_progress(n) do
-    IO.puts("[Prover] notified that #{n} rounds of verification remain")
+    IO.puts("[Prover] verified; #{n} rounds of verification remain")
   end
 end

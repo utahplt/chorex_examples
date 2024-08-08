@@ -13,7 +13,6 @@ defmodule Zkp.LogVerifier do
   @impl true
   def register(ident, token) do
     :ets.insert_new(@user_tbl, {ident, token, @good_p, @good_g})
-    {:ok, ident}
   end
 
   @impl true
