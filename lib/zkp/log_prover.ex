@@ -13,6 +13,11 @@ defmodule Zkp.LogProver do
   end
 
   @impl true
+  def gen_verification_token(username, password, g, p) do
+    :crypto.mod_pow(g, :crypto.hash(:sha256, password <> username), p)
+  end
+
+  @impl true
   def notify_progress(n) do
     IO.puts("[Prover] notified that #{n} rounds of verification remain")
   end

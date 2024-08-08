@@ -2,16 +2,18 @@ defmodule Zkp.ZkpChor do
   import Chorex
 
   defchor [Prover, Verifier] do
-    # Dispatch here if passed 3 arguments
+    # Registration flow
     def run(Prover.(username), Prover.(password), Verifier.(:register)) do
-      with Prover.(hashed_secret) <- Prover.(:crypto.hash(:sha256, password <> username)) do
-        Prover.({username, hashed_secret}) ~> Verifier.({id, secret})
-        Verifier.register(id, secret)
+      Verifier.get_params() ~> Prover.({g, p})
+      with Prover.(token) <- Prover.gen_verification_token(username, password, g, p) do
+        Prover.({username, token}) ~> Verifier.({id, token})
+        Verifier.register(id, token)
         Verifier.({:ok, id})
         Prover.(:ok)
       end
     end
 
+    # Authentication flow
     def run(Verifier.(rounds)) do
       # Prover sends username to verifier
       with Prover.(username) <- Prover.get_ident() do

@@ -1,0 +1,140 @@
+#+title: Chorex Examples
+
+Examples for the [[https://github.com/utahplt/chorex][Chorex]] project
+
+* Synopsis
+
+This repository showcases some example programs built using the [[https://github.com/utahplt/chorex][Chorex]] package, which enables choreographic programming in Elixir. Please see the Chorex library for more details on what this is.
+
+Examples:
+
+ - [[TCP socket handler]]
+ - [[Discrete-logarithm zero knowledge proof]]
+
+This is *not* a library—this is a demo project. (Well, more like lots of little demo projects smooshed together.)
+
+* Examples
+
+** TCP socket handler
+
+This example runs a TCP handler: one connection listens on the port, and as soon as a connection comes in it gets handed off to another process, which spins up a dedicated handler (right now just a simple echo-like server) to manage the individual connection.
+
+This setup is derived from the organization of the [[https://github.com/mtrudel/thousand_island][Thousand Island]] socket server.
+
+There are actually two choreographies at play here:
+
+ - [[file:lib/tcp/listener_chor.ex][lib/tcp/listener_chor.ex]]
+ - [[file:lib/tcp/handler_chor.ex][lib/tcp/handler_chor.ex]]
+
+The listener choreography describes how the port listener hands off connections to an accepter. The acceptor then instantiates a handler choreography for each individual connection.
+
+*** Running
+
+Ensure that the =TcpServer= is configured to run in your =application= setup:
+
+#+name: mix.exs
+#+begin_src elixir
+  def application do
+    [
+      mod: {TcpServer, []},
+      extra_applications: [:logger]
+    ]
+  end
+#+end_src
+
+Now fire up the project with a running =iex= shell:
+
+#+begin_src bash
+  iex -S mix
+#+end_src
+
+The server by default listens on port =4242=. You can connect to it with an application like =nc=:
+
+#+begin_src bash
+  nc localhost 4242
+#+end_src
+
+You should see the connection acknowledgement in the =iex= shell. You can make as many connections as you want; each one gets its own dedicated handler process.
+
+** Discrete-logarithm zero-knowledge proof
+
+This example demonstrates a zero-knowledge proof using discrete logarithms. See [[https://lambdaland.org/posts/2024-08-06_zkp/][this blog post]] for an explanation of how the mathematics work.
+
+The choreography lives at [[file:lib/zkp/zkp_chor.ex][lib/zkp/zkp_chor.ex]].
+
+*** Running
+
+Set up the application in =mix.exs= to run the =ZkpLogin= app:
+
+#+name: mix.exs
+#+begin_src elixir
+  def application do
+    [
+      mod: {ZkpLogin, []},
+      extra_applications: [:logger]
+    ]
+  end
+#+end_src
+
+All this does is ensure that there's an ETS table running to hold the login credentials.
+
+Now you can run a login session after running =iex -S mix= like so:
+
+#+begin_src elixir
+  iex> ZkpLogin.register()
+  [New User] username: alice
+  [New User] password: foobar
+  User alice
+   registered.
+  Prover finished.
+  :ok
+  iex> ZkpLogin.login()
+  Username: alice
+  Password: foobar
+  [Prover] notified that 20 rounds of verification remain
+  [Prover] notified that 19 rounds of verification remain
+  [Prover] notified that 18 rounds of verification remain
+  [Prover] notified that 17 rounds of verification remain
+  [Prover] notified that 16 rounds of verification remain
+  [Prover] notified that 15 rounds of verification remain
+  [Prover] notified that 14 rounds of verification remain
+  [Prover] notified that 13 rounds of verification remain
+  [Prover] notified that 12 rounds of verification remain
+  [Prover] notified that 11 rounds of verification remain
+  [Prover] notified that 10 rounds of verification remain
+  [Prover] notified that 9 rounds of verification remain
+  [Prover] notified that 8 rounds of verification remain
+  [Prover] notified that 7 rounds of verification remain
+  [Prover] notified that 6 rounds of verification remain
+  [Prover] notified that 5 rounds of verification remain
+  [Prover] notified that 4 rounds of verification remain
+  [Prover] notified that 3 rounds of verification remain
+  [Prover] notified that 2 rounds of verification remain
+  [Prover] notified that 1 rounds of verification remain
+  Verifier responds :accept
+  Prover responds :accept
+  :ok
+  iex> ZkpLogin.login()
+  Username: alice
+  Password: zzzz
+  Verifier responds :reject
+  Prover responds :fail
+  :ok
+  iex>
+#+end_src
+
+(Output might change slightly.)
+
+* Bug reporting and contributing
+
+Chorex is a rapidly-evolving library. (I found several bugs while building these examples!) If you find a bug or would like to contribute an example or to Chorex itself, please feel free to open an issue or a pull-request on GitHub.
+
+If you have any comments or feedback, you can [[https://lambdaland.org/#contact][contact me directly]].
+
+* License
+
+MIT License
+
+* Authors
+
+ - [[https://lambdaland.org][Ashton Wiersdorf]]

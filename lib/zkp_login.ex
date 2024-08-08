@@ -1,4 +1,12 @@
 defmodule ZkpLogin do
+  use Application
+
+  @impl true
+  def start(_type, _args) do
+    Zkp.LogVerifier.start_kv_store()
+    {:ok, self()}
+  end
+
   def register() do
     username = IO.gets("[New User] username: ")
     passwd = IO.gets("[New User] password: ")
