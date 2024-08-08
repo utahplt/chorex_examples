@@ -1,55 +1,77 @@
 defmodule Zkp.ZkpChor do
   import Chorex
 
-  # Example from: https://en.wikipedia.org/wiki/Zero-knowledge_proof#Discrete_log_of_a_given_value
   defchor [Prover, Verifier] do
-    def run(Verifier.(rounds)) do
-      with Verifier.({p, g}) <- Verifier.gen_pg() do
-        Verifier.({p, g}) ~> Prover.({p, g})
-        Prover.get_id() ~> Verifier.(prover_id)
-        round_loop(Prover.({get_secret(), p g}), Verifier.({get_secret_for(prover_id), p, g}), Verifier.(rounds))
+    # Dispatch here if passed 3 arguments
+    def run(Prover.(username), Prover.(password), Verifier.(:register)) do
+      with Prover.(hashed_secret) <- Prover.(:crypto.hash(:sha256, password <> username)) do
+        Prover.({username, hashed_secret}) ~> Verifier.({id, secret})
+        Verifier.register(id, secret)
+        Verifier.({:ok, id})
+        Prover.(:ok)
       end
     end
 
-    # I'm not sure I can actually do this because I would need a way
-    # to merge the choreographies of the two branches for the
-    # projection of Prover. I think I'll have to merge the two into an
-    # "if" and one function, or keep a round count on both.
-    def round_loop(Prover.({secret_x, p, g}), Verifier.({secret_y, p, g}), Verifier.(0)) do
-      Verifier[L] ~> Prover     # implicit choice in function signature
-      Verifier.(:accept)
-      Prover.(:accept)
-    end
+    def run(Verifier.(rounds)) do
+      # Prover sends username to verifier
+      with Prover.(username) <- Prover.get_ident() do
+        Prover.(username) ~> Verifier.(ident)
 
-    def round_loop(Prover.({secret_x, p, g}), Verifier.({secret_y, p, g}), Verifier.(rounds_left)) do
-      Verifier[R] ~> Prover
-      with Verifier.(good_proof?) <- round(Prover.({secret_x, p, g}), Verifier.({secret_y, p, g})) do
-        if Verifier.(good_proof?) do
-          Verifier[L] ~> Prover
-          Verifier.(rounds_left) ~> Prover.(remaining_rounds)
-          Prover.notify_progress(remaining_rounds)
-          round_loop(Prover.({secret_x, p, g}), Verifier.({secret_y, p, g}), Verifier.(rounds_left - 1))
-        else
-          Verifier[R] ~> Prover
-          Prover.(:fail)
-          Verifier.(:fail)
+        # Prover looks up authentication parameters; y is validation key
+        with Verifier.(creds) <- Verifier.lookup(ident) do
+          if Verifier.(creds) do
+            Verifier[L] ~> Prover
+            with Verifier.({y, p, g}) <- Verifier.(creds) do
+              Verifier.({p, g}) ~> Prover.({p, g})
+
+              round_loop(Verifier.({p, g, y}), Verifier.(rounds), Prover.({p, g, get_secret(username)}))
+            end
+          else
+            Verifier[R] ~> Prover
+            Verifier.(:bad_username)
+            Prover.(:bad_username)
+          end
         end
       end
     end
 
-    def round(Prover.({secret_x, p, g}), Verifier.({secret_y, p, g})) do
-      with Prover.(r) <- Prover.gen_rand(g, p) do
-        Prover.(:crypto.mod_pow(g, r, p)) ~> Verifier.(c)
+    # y is the validation token, x is the client secret
+    def round_loop(Verifier.({p, g, y}), Verifier.(rounds), Prover.({p, g, x})) do
+      if Verifier.(rounds <= 0) do
+        Verifier[L] ~> Prover
+        Verifier.(:accept)
+        Prover.(:accept)
+      else
+        Verifier[R] ~> Prover
 
-        with Verifier.(choice) <- Verifier.rand_request() do
-          if choice == :r do
+        with Verifier.(good_proof?) <- do_round(Verifier.({p, g, y}), Prover.({p, g, x})) do
+          if Verifier.(good_proof?) do
             Verifier[L] ~> Prover
-            Prover.(r) ~> Verifier.(r)
-            Verifier.verify_round(c, r, g, p)
+            Verifier.(rounds) ~> Prover.(remaining_rounds)
+            Prover.notify_progress(remaining_rounds)
+            round_loop(Verifier.({p, g, y}), Verifier.(rounds - 1), Prover.({p, g, x}))
           else
             Verifier[R] ~> Prover
-            Prover.(rem(secret_x + r, p - 1)) ~> Verifier.(xr_modp)
-            Verifier.verify_round(c, xr_modp, secret_y, g, p)
+            Verifier.(:reject)
+            Prover.(:fail)
+          end
+        end
+      end
+    end
+
+    def do_round(Verifier.({p, g, y}), Prover.({p, g, x})) do
+      with Prover.(r) <- Prover.(Enum.random(2..p)) do
+        Prover.(:crypto.mod_pow(g, r, p)) ~> Verifier.(c)
+
+        with Verifier.(choice) <- Verifier.challenge_type() do
+          if Verifier.(choice == :r) do
+            Verifier[L] ~> Prover
+            Prover.(r) ~> Verifier.(r)
+            Verifier.verify_round(c, r, p, g)
+          else
+            Verifier[R] ~> Prover
+            Prover.(rem(:crypto.bytes_to_integer(x) + r, p - 1)) ~> Verifier.(xr_modp)
+            Verifier.verify_round(c, xr_modp, y, p, g)
           end
         end
       end
