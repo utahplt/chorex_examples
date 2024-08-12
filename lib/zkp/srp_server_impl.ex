@@ -1,7 +1,7 @@
 defmodule Zkp.SrpServerImpl do
   use Zkp.SrpChor.Chorex, :srpserver
 
-  import Zkp.SrpChor, only: [hash_things: 1]
+  # import Zkp.SrpChor, only: [hash_things: 1]
 
   @good_g 5
   @good_p 479694587694587625877438567424477454923
@@ -17,7 +17,6 @@ defmodule Zkp.SrpServerImpl do
   #   :ets.insert_new(@user_tbl, {ident, token, @good_p, @good_g})
   # end
 
-  @impl true
   def get_params(), do: {@good_g, @good_p}
 
   @impl true
@@ -38,5 +37,13 @@ defmodule Zkp.SrpServerImpl do
   @impl true
   def valid_m1?(a, b, k, m1) do
 	hash_things([a, b, k]) == m1
+  end
+
+  @impl true
+  defdelegate hash_things(lst), to: Zkp.SrpChor
+
+  @impl true
+  def compute_m2(big_a, m1, secret) do
+	hash_things([big_a, m1, secret])
   end
 end

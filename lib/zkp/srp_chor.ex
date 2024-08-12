@@ -29,11 +29,11 @@ defmodule Zkp.SrpChor do
 
                     with SrpServer.(secret) <-
                            SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
-                      if SrpServer.valid_m1?(big_a, big_b, m1) do
+                      if SrpServer.valid_m1?(big_a, big_b, k, m1) do
                         SrpServer[L] ~> SrpClient
                         SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
 
-                        if SrpClient.valid_m2?(m2) do
+                        if SrpClient.valid_m2?(big_a, m1, secret, m2) do
                           SrpClient[L] ~> SrpServer
                           SrpClient.({:ok, secret})
                           SrpServer.({:ok, secret})

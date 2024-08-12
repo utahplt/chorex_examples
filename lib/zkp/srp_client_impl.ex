@@ -28,4 +28,9 @@ defmodule Zkp.SrpClientImpl do
     {big_a, m1, secret_k}
   end
 
+  @impl true
+  def valid_m2?(big_a, m1, k, m2) do
+	hash_things([big_a, m1, k]) == m2
+  end
+
 end
