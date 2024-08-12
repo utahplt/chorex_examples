@@ -3,6 +3,23 @@ defmodule Zkp.SrpChor do
 
   # Protocol from http://srp.stanford.edu/design.html
   defchor [SrpServer, SrpClient] do
+    # Registration flow
+    def run(SrpClient.({username, password}), SrpServer.(:register)) do
+      SrpServer.get_params() ~> SrpClient.({salt, g, p})
+      with SrpClient.(v) <- SrpClient.gen_verification_token(username, password, salt, g, p) do
+        SrpClient.({username, salt, v}) ~> SrpServer.({username, salt, v})
+        if SrpServer.register(username, salt, v) do
+          SrpServer[L] ~> SrpClient
+          SrpServer.({:registered, username})
+          SrpClient.(:registered)
+        else
+          SrpServer[R] ~> SrpClient
+          SrpServer.({:error, :no_registration, username})
+          SrpClient.({:error, :no_registration})
+        end
+      end
+    end
+
     # Login flow
     def run() do
       with SrpClient.(id) <- SrpClient.get_id() do
@@ -19,7 +36,7 @@ defmodule Zkp.SrpChor do
               with SrpServer.(k) <- SrpServer.(hash_things([g, n])) do
                 with SrpServer.(big_b) <-
                        SrpServer.(
-                         :crypto.mod_pow(:crypto.mod_pow(g, b_secret, n) + k * tok, 1, n)
+                         mpow(as_int(mpow(g, b_secret, n)) + as_int(k) * as_int(tok), 1, n)
                        ) do
                   SrpServer.({g, n, salt, k, big_b}) ~> SrpClient.({g, n, salt, k, big_b})
 
@@ -66,7 +83,7 @@ defmodule Zkp.SrpChor do
     args
     |> Enum.map(&to_binary/1)
     |> Enum.reduce(&<>/2)
-    |> then(&:crypto.hash(:sha265, &1))
+    |> then(&:crypto.hash(:sha256, &1))
   end
 
   defp to_binary(thing) when is_binary(thing), do: thing

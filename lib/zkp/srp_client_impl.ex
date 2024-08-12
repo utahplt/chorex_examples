@@ -9,7 +9,7 @@ defmodule Zkp.SrpClientImpl do
   end
 
   def hash_passwd(id, salt, passwd) do
-    :crypto.bytes_to_integer(:crypto.hash(:shasum256, "#{id}#{salt}#{passwd}"))
+    as_int(:crypto.hash(:sha256, "#{id}#{salt}#{passwd}"))
   end
 
   @impl true
@@ -20,9 +20,10 @@ defmodule Zkp.SrpClientImpl do
     big_a = :crypto.mod_pow(g, a, n)
     x = hash_passwd(id, s, passwd)
 
-    u = :crypto.bytes_to_integer(hash_things([big_a, big_b]))
+    u = as_int(hash_things([big_a, big_b]))
 
-    secret_k = :crypto.mod_pow(big_b - :crypto.mod_pow(k * g, x, n), (a + u * x), n)
+    k = as_int(k)
+    secret_k = mpow(as_int(big_b) - as_int(mpow(k * g, x, n)), (a + u * x), n)
 
     m1 = hash_things([big_a, big_b, secret_k])
     {big_a, m1, secret_k}
@@ -33,4 +34,12 @@ defmodule Zkp.SrpClientImpl do
 	hash_things([big_a, m1, k]) == m2
   end
 
+  defdelegate mpow(a, b, c), to: :crypto, as: :mod_pow
+  defdelegate as_int(n), to: :crypto, as: :bytes_to_integer
+
+  @impl true
+  def gen_verification_token(username, password, salt, g, p) do
+    x = hash_things([username, salt, password])
+    mpow(g, x, p)
+  end
 end

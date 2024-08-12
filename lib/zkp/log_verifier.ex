@@ -36,8 +36,11 @@ defmodule Zkp.LogVerifier do
     c == :crypto.mod_pow(g, r, p)
   end
 
+  defdelegate as_int(n), to: :crypto, as: :bytes_to_integer
+  defdelegate mpow(a, b, c), to: :crypto, as: :mod_pow
+
   @impl true
   def verify_round(c, xr_modp, y, p, g) do
-    :crypto.mod_pow(g, xr_modp, p) == :crypto.mod_pow(:crypto.bytes_to_integer(c) * :crypto.bytes_to_integer(y), 1, p)
+    mpow(g, xr_modp, p) == mpow(as_int(c) * as_int(y), 1, p)
   end
 end
