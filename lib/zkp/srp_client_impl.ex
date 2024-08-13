@@ -12,21 +12,14 @@ defmodule Zkp.SrpClientImpl do
   def compute_secret(g, n, s, big_b, k, id) do
     passwd = IO.gets("[Login] password: ") |> String.trim()
 
-    # a = Enum.random(2..n)
-    a = 7
+    a = Enum.random(2..n)
     big_a = :crypto.mod_pow(g, a, n)
-    big_a = as_int(big_a)
-    big_b = as_int(big_b)
     x = hash_things([id, s, passwd])
-
     u = hash_things([big_a, big_b])
 
-    k = as_int(k)
-    secret_k = mpow(as_int(big_b) - (k * as_int(mpow(g, x, n))), (a + u * as_int(x)), n)
+    secret_k = mpow(as_int(big_b) - rem(as_int(k) * as_int(mpow(g, x, n)), n), (a + as_int(u) * as_int(x)), n)
 
-    IO.puts("[client] a: #{a}, A: #{big_a}, x: #{x}, u: #{u}, k: #{k}, B: #{big_b}, secret: #{as_int(secret_k)}")
-
-    m1 = hash_things([big_a, big_b, as_int(secret_k)]) |> IO.inspect(label: "[client] m1")
+    m1 = hash_things([big_a, big_b, secret_k])
     {big_a, m1, secret_k}
   end
 
@@ -36,14 +29,11 @@ defmodule Zkp.SrpClientImpl do
   end
 
   defdelegate mpow(a, b, c), to: :crypto, as: :mod_pow
-  # defdelegate as_int(n), to: :crypto, as: :bytes_to_integer
-  def as_int(n) when is_integer(n), do: n
-  def as_int(n) when is_binary(n), do: :crypto.bytes_to_integer(n)
+  defdelegate as_int(n), to: :crypto, as: :bytes_to_integer
 
   @impl true
   def gen_verification_token(username, password, salt, g, p) do
     x = hash_things([username, salt, password])
-    |> IO.inspect(label: "[client] x")
-    mpow(g, x, p) |> as_int() |> IO.inspect(label: "[client] tok")
+    mpow(g, x, p)
   end
 end

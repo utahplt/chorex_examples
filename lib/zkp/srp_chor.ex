@@ -80,10 +80,6 @@ defmodule Zkp.SrpChor do
     end
   end
 
-  def hash_things([a]), do: String.length("(#{a})") |> IO.inspect(label: "hash(#{a})")
-  def hash_things([a, b]), do: String.length("(#{a} #{b})") |> IO.inspect(label: "hash(#{a}, #{b})")
-  def hash_things([a, b, c]), do: String.length("(#{a} #{b} #{c})") |> IO.inspect(label: "hash(#{a}, #{b}, #{c})")
-
   def hash_things(args) do
     args
     |> Enum.map(&to_binary/1)
