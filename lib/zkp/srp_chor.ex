@@ -6,8 +6,10 @@ defmodule Zkp.SrpChor do
     # Registration flow
     def run(SrpClient.({username, password}), SrpServer.(:register)) do
       SrpServer.get_params() ~> SrpClient.({salt, g, p})
+
       with SrpClient.(v) <- SrpClient.gen_verification_token(username, password, salt, g, p) do
         SrpClient.({username, salt, v}) ~> SrpServer.({username, salt, v})
+
         if SrpServer.register(username, salt, v) do
           SrpServer[L] ~> SrpClient
           SrpServer.({:registered, username})
@@ -29,12 +31,9 @@ defmodule Zkp.SrpChor do
           if SrpServer.(cred_lookup) do
             SrpServer[L] ~> SrpClient
 
-            with SrpServer.({{g, n, salt, tok}, b_secret}) <-
-                   SrpServer.(
-                     # {cred_lookup, Enum.random(2..10_000)}
-                     {cred_lookup, 12}
-                   ) do
-              with SrpServer.(k) <- SrpServer.(hash_things([g, n])) do
+            with SrpServer.({g, n, salt, tok}) <- SrpServer.(cred_lookup) do
+              with SrpServer.({k, b_secret}) <-
+                     SrpServer.({hash_things([g, n]), Enum.random(2..n)}) do
                 with SrpServer.(big_b) <-
                        SrpServer.(
                          mpow(as_int(mpow(g, b_secret, n)) + as_int(k) * as_int(tok), 1, n)
