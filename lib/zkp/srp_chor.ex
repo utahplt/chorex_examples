@@ -31,7 +31,8 @@ defmodule Zkp.SrpChor do
 
             with SrpServer.({{g, n, salt, tok}, b_secret}) <-
                    SrpServer.(
-                     {cred_lookup, Enum.random(2..10_000_000_000_000_000_000_000_000_000)}
+                     # {cred_lookup, Enum.random(2..10_000)}
+                     {cred_lookup, 12}
                    ) do
               with SrpServer.(k) <- SrpServer.(hash_things([g, n])) do
                 with SrpServer.(big_b) <-
@@ -78,6 +79,10 @@ defmodule Zkp.SrpChor do
       end
     end
   end
+
+  def hash_things([a]), do: String.length("(#{a})") |> IO.inspect(label: "hash(#{a})")
+  def hash_things([a, b]), do: String.length("(#{a} #{b})") |> IO.inspect(label: "hash(#{a}, #{b})")
+  def hash_things([a, b, c]), do: String.length("(#{a} #{b} #{c})")
 
   def hash_things(args) do
     args
