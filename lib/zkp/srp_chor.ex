@@ -31,40 +31,36 @@ defmodule Zkp.SrpChor do
           if SrpServer.(cred_lookup) do
             SrpServer[L] ~> SrpClient
 
-            with SrpServer.({g, n, salt, tok}) <- SrpServer.(cred_lookup) do
-              with SrpServer.({k, b_secret}) <-
-                     SrpServer.({hash_things([g, n]), Enum.random(2..n)}) do
-                with SrpServer.(big_b) <-
-                       SrpServer.(
-                         mpow(as_int(mpow(g, b_secret, n)) + as_int(k) * as_int(tok), 1, n)
-                       ) do
-                  SrpServer.({g, n, salt, k, big_b}) ~> SrpClient.({g, n, salt, k, big_b})
+            with SrpServer.({g, n, salt, tok}) <- SrpServer.(cred_lookup),
+                 SrpServer.(k) <- SrpServer.(hash_things([g, n])),
+                 SrpServer.(b_secret) <- SrpServer.(Enum.random(2..n)),
+                 SrpServer.(big_b) <-
+                   SrpServer.(mpow(as_int(mpow(g, b_secret, n)) + as_int(k) * as_int(tok), 1, n)) do
+              SrpServer.({g, n, salt, k, big_b}) ~> SrpClient.({g, n, salt, k, big_b})
 
-                  with SrpClient.({big_a, m1, secret}) <-
-                         SrpClient.compute_secret(g, n, salt, big_b, k, id) do
-                    SrpClient.({big_a, m1}) ~> SrpServer.({big_a, m1})
+              with SrpClient.({big_a, m1, secret}) <-
+                     SrpClient.compute_secret(g, n, salt, big_b, k, id) do
+                SrpClient.({big_a, m1}) ~> SrpServer.({big_a, m1})
 
-                    with SrpServer.(secret) <-
-                           SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
-                      if SrpServer.valid_m1?(big_a, big_b, secret, m1) do
-                        SrpServer[L] ~> SrpClient
-                        SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
+                with SrpServer.(secret) <-
+                       SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
+                  if SrpServer.valid_m1?(big_a, big_b, secret, m1) do
+                    SrpServer[L] ~> SrpClient
+                    SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
 
-                        if SrpClient.valid_m2?(big_a, m1, secret, m2) do
-                          SrpClient[L] ~> SrpServer
-                          SrpClient.({:ok, secret})
-                          SrpServer.({:ok, secret})
-                        else
-                          SrpClient[R] ~> SrpServer
-                          SrpClient.({:fail, :reject_server_digest})
-                          SrpServer.({:fail, :client_rejected_digest})
-                        end
-                      else
-                        SrpServer[R] ~> SrpClient
-                        SrpServer.({:fail, :reject_client_digest})
-                        SrpClient.({:fail, :server_rejected_digest})
-                      end
+                    if SrpClient.valid_m2?(big_a, m1, secret, m2) do
+                      SrpClient[L] ~> SrpServer
+                      SrpClient.({:ok, secret})
+                      SrpServer.({:ok, secret})
+                    else
+                      SrpClient[R] ~> SrpServer
+                      SrpClient.({:fail, :reject_server_digest})
+                      SrpServer.({:fail, :client_rejected_digest})
                     end
+                  else
+                    SrpServer[R] ~> SrpClient
+                    SrpServer.({:fail, :reject_client_digest})
+                    SrpClient.({:fail, :server_rejected_digest})
                   end
                 end
               end
