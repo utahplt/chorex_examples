@@ -8,34 +8,25 @@ defmodule Zkp.SrpClientImpl do
 	IO.gets("[Login] username: ") |> String.trim()
   end
 
-  def hash_passwd(id, salt, passwd) do
-    hash_things([id, salt, passwd])
-  end
-
   @impl true
   def compute_secret(g, n, s, big_b, k, id) do
     passwd = IO.gets("[Login] password: ") |> String.trim()
 
     # a = Enum.random(2..n)
     a = 7
-    big_a = :crypto.mod_pow(g, a, n) |> as_int()
+    big_a = :crypto.mod_pow(g, a, n)
+    big_a = as_int(big_a)
     big_b = as_int(big_b)
-    x = hash_passwd(id, s, passwd)
-    # IO.inspect(as_int(x), label: "[client] x")
-    mpow(g, x, n) |> as_int() |> IO.inspect(label: "[client] should match verif code")
+    x = hash_things([id, s, passwd])
 
-    u = as_int(hash_things([big_a, big_b]))
-    # u's match; x looks good
+    u = hash_things([big_a, big_b])
 
     k = as_int(k)
-    big_b = as_int(big_b)
-    # IO.inspect({as_int(big_b), k, g, as_int(x), a, u, n}, label: "[client] {big_b, k, g, x, a, u, n}")
-    secret_k = mpow(as_int(big_b) - (k * as_int(mpow(g, x, n))), (a + u * as_int(x)), n) |> as_int()
-    # IO.inspect(as_int(secret_k), label: "[client] secret_k")
+    secret_k = mpow(as_int(big_b) - (k * as_int(mpow(g, x, n))), (a + u * as_int(x)), n)
 
-    IO.puts("[client] a: #{a}, A: #{big_a}, x: #{x}, u: #{u}, k: #{k}, B: #{big_b}, secret: #{secret_k}")
+    IO.puts("[client] a: #{a}, A: #{big_a}, x: #{x}, u: #{u}, k: #{k}, B: #{big_b}, secret: #{as_int(secret_k)}")
 
-    m1 = hash_things([big_a, big_b, secret_k])
+    m1 = hash_things([big_a, big_b, as_int(secret_k)]) |> IO.inspect(label: "[client] m1")
     {big_a, m1, secret_k}
   end
 

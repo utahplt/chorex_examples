@@ -41,24 +41,19 @@ defmodule Zkp.SrpServerImpl do
     big_a = as_int(big_a)
     big_b = as_int(big_b)
     u = hash_things([big_a, big_b])
-    # IO.inspect(as_int(u), label: "[server] u")
 
-    # IO.inspect({as_int(big_a), as_int(v), as_int(u), b, n}, label: "[server] {big_a, v, u, b n}")
+    secret_k = mpow((big_a * as_int(mpow(v, u, n))), b, n)
 
-    secret_k = mpow((as_int(big_a) * as_int(mpow(v, u, n))), b, n) |> as_int()
+    IO.puts("[server] A: #{big_a}, b: #{b}, B: #{big_b}, u: #{as_int(u)}, v: #{as_int(v)}, secret: #{as_int(secret_k)}")
 
-    # IO.inspect(as_int(secret_k), label: "[server] secret_k")
-    big_a = as_int(big_a)
-    big_b = as_int(big_b)
-    u = as_int(u)
-    v = as_int(v)
-
-    IO.puts("[server] A: #{big_a}, b: #{b}, B: #{big_b}, u: #{u}, v: #{v}, secret: #{secret_k}")
     secret_k
   end
 
   @impl true
   def valid_m1?(a, b, k, m1) do
+    b = as_int(b)
+    k = as_int(k)
+    IO.inspect({a, b, k, m1, hash_things([a, b, k])}, label: "[server] a b k m1 m1_verif")
 	hash_things([a, b, k]) == m1
   end
 

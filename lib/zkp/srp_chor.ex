@@ -47,7 +47,7 @@ defmodule Zkp.SrpChor do
 
                     with SrpServer.(secret) <-
                            SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
-                      if SrpServer.valid_m1?(big_a, big_b, k, m1) do
+                      if SrpServer.valid_m1?(big_a, big_b, secret, m1) do
                         SrpServer[L] ~> SrpClient
                         SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
 
@@ -82,7 +82,7 @@ defmodule Zkp.SrpChor do
 
   def hash_things([a]), do: String.length("(#{a})") |> IO.inspect(label: "hash(#{a})")
   def hash_things([a, b]), do: String.length("(#{a} #{b})") |> IO.inspect(label: "hash(#{a}, #{b})")
-  def hash_things([a, b, c]), do: String.length("(#{a} #{b} #{c})")
+  def hash_things([a, b, c]), do: String.length("(#{a} #{b} #{c})") |> IO.inspect(label: "hash(#{a}, #{b}, #{c})")
 
   def hash_things(args) do
     args
