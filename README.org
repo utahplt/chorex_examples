@@ -81,14 +81,14 @@ All this does is ensure that there's an ETS table running to hold the login cred
 Now you can run a login session after running =iex -S mix= like so:
 
 #+begin_src elixir
-  iex> ZkpLogin.register()
+  iex> ZkpLogin.register_log()
   [New User] username: alice
   [New User] password: foobar
   User alice
    registered.
   Prover finished.
   :ok
-  iex> ZkpLogin.login()
+  iex> ZkpLogin.login_log()
   Username: alice
   Password: foobar
   [Prover] notified that 20 rounds of verification remain
@@ -114,7 +114,7 @@ Now you can run a login session after running =iex -S mix= like so:
   Verifier responds :accept
   Prover responds :accept
   :ok
-  iex> ZkpLogin.login()
+  iex> ZkpLogin.login_log()
   Username: alice
   Password: zzzz
   Verifier responds :reject
@@ -124,6 +124,49 @@ Now you can run a login session after running =iex -S mix= like so:
 #+end_src
 
 (Output might change slightly.)
+
+** Secure Remote Password (SRP)
+
+This example is a working implementation of the SRP protocol or password-based login. It uses a zero-knowledge proof to verify a user's identity and creates a secure session key as a byproduct.
+
+The choreography lives at [[file:lib/zkp/srp_chor.ex][lib/zkp/srp_chor.ex]].
+
+*** Running
+
+This example needs the same application setup as the [[Discrete-logarithm zero-knowledge proof]]:
+
+#+name: mix.exs
+#+begin_src elixir
+  def application do
+    [
+      mod: {ZkpLogin, []},
+      extra_applications: [:logger]
+    ]
+  end
+#+end_src
+
+Now you can call the =ZkpLogin.register_srp()= function to create a new user, and =ZkpLogin.login_srp()= to attempt to log in:
+
+#+begin_src elixir
+  iex(1)> ZkpLogin.register_srp()
+  [New User SRP] username: alice
+  [New User SRP] password: foobar
+  Server responds {:registered, "alice"}
+  Client responds :registered
+  :ok
+  iex(2)> ZkpLogin.login_srp()
+  [Login] username: alice
+  [Login] password: foobar
+  Server responds {:ok, <<109, 118, 74, 148, 188, 77, 157, 221, 90, 9, 126, 195, 53, 81, 105, 252, 54, 157, 31, 149, 249, 127, 142, 190, 177, 220, 25, 42, 142, 192, 160, 125, 110, 238, 153, 12, 16, 42>>}
+  Client responds {:ok, <<109, 118, 74, 148, 188, 77, 157, 221, 90, 9, 126, 195, 53, 81, 105, 252, 54, 157, 31, 149, 249, 127, 142, 190, 177, 220, 25, 42, 142, 192, 160, 125, 110, 238, 153, 12, 16, 42>>}
+  :ok
+  iex(3)> ZkpLogin.login_srp()
+  [Login] username: alice
+  [Login] password: zzzzzz
+  Server responds {:fail, :reject_client_digest}
+  Client responds {:fail, :server_rejected_digest}
+  :ok
+#+end_src
 
 * Bug reporting and contributing
 
