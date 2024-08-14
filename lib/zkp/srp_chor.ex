@@ -5,9 +5,9 @@ defmodule Zkp.SrpChor do
   defchor [SrpServer, SrpClient] do
     # Registration flow
     def run(SrpClient.({username, password}), SrpServer.(:register)) do
-      SrpServer.get_params() ~> SrpClient.({salt, g, p})
+      SrpServer.get_params() ~> SrpClient.({salt, g, n})
 
-      with SrpClient.(v) <- SrpClient.gen_verification_token(username, password, salt, g, p) do
+      with SrpClient.(v) <- SrpClient.gen_verification_token(username, password, salt, g, n) do
         SrpClient.({username, salt, v}) ~> SrpServer.({username, salt, v})
 
         if SrpServer.register(username, salt, v) do
@@ -25,6 +25,7 @@ defmodule Zkp.SrpChor do
     # Login flow
     def run() do
       with SrpClient.(id) <- SrpClient.get_id() do
+        # Client {id} → Server
         SrpClient.(id) ~> SrpServer.(id)
 
         with SrpServer.(cred_lookup) <- SrpServer.lookup(id) do
@@ -32,20 +33,21 @@ defmodule Zkp.SrpChor do
             SrpServer[L] ~> SrpClient
 
             with SrpServer.({g, n, salt, tok}) <- SrpServer.(cred_lookup),
-                 SrpServer.(k) <- SrpServer.(hash_things([g, n])),
-                 SrpServer.(b_secret) <- SrpServer.(Enum.random(2..n)),
-                 SrpServer.(big_b) <-
-                   SrpServer.(mpow(as_int(mpow(g, b_secret, n)) + as_int(k) * as_int(tok), 1, n)) do
+                 SrpServer.({k, b_secret, big_b}) <- SrpServer.gen_parameters(g, n, tok) do
+              # Server {g, n, salt, k, B} → Client
               SrpServer.({g, n, salt, k, big_b}) ~> SrpClient.({g, n, salt, k, big_b})
 
               with SrpClient.({big_a, m1, secret}) <-
                      SrpClient.compute_secret(g, n, salt, big_b, k, id) do
+                # Client {A, M₁} → Server
                 SrpClient.({big_a, m1}) ~> SrpServer.({big_a, m1})
 
                 with SrpServer.(secret) <-
                        SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
                   if SrpServer.valid_m1?(big_a, big_b, secret, m1) do
                     SrpServer[L] ~> SrpClient
+
+                    # Server M₂ → Client
                     SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
 
                     if SrpClient.valid_m2?(big_a, m1, secret, m2) do
