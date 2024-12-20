@@ -8,8 +8,8 @@ This repository showcases some example programs built using the [[https://github
 
 Examples:
 
- - [[TCP socket handler]]
- - [[Discrete-logarithm zero knowledge proof]]
+ - [[#tcp-socket-handler][TCP socket handler]]
+ - [[#discrete-logarithm-zero-knowledge-proof][Discrete-logarithm zero knowledge proof]]
 
 This is *not* a library—this is a demo project. (Well, more like lots of little demo projects smooshed together.)
 
