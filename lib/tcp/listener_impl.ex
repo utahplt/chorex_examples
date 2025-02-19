@@ -3,6 +3,7 @@ defmodule Tcp.ListenerImpl do
 
   @hardcoded_options [mode: :binary, active: false]
 
+  @impl true
   def get_listener_socket(config) do
     default_options = [
       backlog: 1024,

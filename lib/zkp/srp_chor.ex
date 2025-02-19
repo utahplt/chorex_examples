@@ -11,11 +11,9 @@ defmodule Zkp.SrpChor do
         SrpClient.({username, salt, v}) ~> SrpServer.({username, salt, v})
 
         if SrpServer.register(username, salt, v) do
-          SrpServer[L] ~> SrpClient
           SrpServer.({:registered, username})
           SrpClient.(:registered)
         else
-          SrpServer[R] ~> SrpClient
           SrpServer.({:error, :no_registration, username})
           SrpClient.({:error, :no_registration})
         end
@@ -30,7 +28,6 @@ defmodule Zkp.SrpChor do
 
         with SrpServer.(cred_lookup) <- SrpServer.lookup(id) do
           if SrpServer.(cred_lookup) do
-            SrpServer[L] ~> SrpClient
 
             with SrpServer.({g, n, salt, tok}) <- SrpServer.(cred_lookup),
                  SrpServer.({k, b_secret, big_b}) <- SrpServer.gen_parameters(g, n, tok) do
@@ -45,22 +42,18 @@ defmodule Zkp.SrpChor do
                 with SrpServer.(secret) <-
                        SrpServer.compute_secret(n, big_a, big_b, b_secret, tok) do
                   if SrpServer.valid_m1?(big_a, big_b, secret, m1) do
-                    SrpServer[L] ~> SrpClient
 
                     # Server M₂ → Client
                     SrpServer.compute_m2(big_a, m1, secret) ~> SrpClient.(m2)
 
                     if SrpClient.valid_m2?(big_a, m1, secret, m2) do
-                      SrpClient[L] ~> SrpServer
                       SrpClient.({:ok, secret})
                       SrpServer.({:ok, secret})
                     else
-                      SrpClient[R] ~> SrpServer
                       SrpClient.({:fail, :reject_server_digest})
                       SrpServer.({:fail, :client_rejected_digest})
                     end
                   else
-                    SrpServer[R] ~> SrpClient
                     SrpServer.({:fail, :reject_client_digest})
                     SrpClient.({:fail, :server_rejected_digest})
                   end
@@ -68,7 +61,6 @@ defmodule Zkp.SrpChor do
               end
             end
           else
-            SrpServer[R] ~> SrpClient
             SrpServer.({:fail, :unknown_user})
             SrpClient.({:fail, :unknown_user})
           end

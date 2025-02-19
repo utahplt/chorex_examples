@@ -8,11 +8,9 @@ defmodule Zkp.ZkpChor do
       with Prover.(token) <- Prover.gen_verification_token(username, password, g, p) do
         Prover.({username, token}) ~> Verifier.({id, token})
         if Verifier.register(id, token) do
-          Verifier[L] ~> Prover
           Verifier.({:ok, id})
           Prover.(:ok)
         else
-          Verifier[R] ~> Prover
           Verifier.(:failed)
           Prover.(:failed)
         end
@@ -28,14 +26,12 @@ defmodule Zkp.ZkpChor do
         # Prover looks up authentication parameters; y is validation key
         with Verifier.(creds) <- Verifier.lookup(ident) do
           if Verifier.(creds) do
-            Verifier[L] ~> Prover
             with Verifier.({y, p, g}) <- Verifier.(creds) do
               Verifier.({p, g}) ~> Prover.({p, g})
 
               round_loop(Verifier.({p, g, y}), Verifier.(rounds), Prover.({p, g, get_secret(username)}))
             end
           else
-            Verifier[R] ~> Prover
             Verifier.(:bad_username)
             Prover.(:bad_username)
           end
@@ -46,20 +42,16 @@ defmodule Zkp.ZkpChor do
     # y is the validation token, x is the client secret
     def round_loop(Verifier.({p, g, y}), Verifier.(rounds), Prover.({p, g, x})) do
       if Verifier.(rounds <= 0) do
-        Verifier[L] ~> Prover
         Verifier.(:accept)
         Prover.(:accept)
       else
-        Verifier[R] ~> Prover
 
         with Verifier.(good_proof?) <- do_round(Verifier.({p, g, y}), Prover.({p, g, x})) do
           if Verifier.(good_proof?) do
-            Verifier[L] ~> Prover
             Verifier.(rounds) ~> Prover.(remaining_rounds)
             Prover.notify_progress(remaining_rounds)
             round_loop(Verifier.({p, g, y}), Verifier.(rounds - 1), Prover.({p, g, x}))
           else
-            Verifier[R] ~> Prover
             Verifier.(:reject)
             Prover.(:fail)
           end
@@ -73,11 +65,9 @@ defmodule Zkp.ZkpChor do
 
         with Verifier.(choice) <- Verifier.challenge_type() do
           if Verifier.(choice == :r) do
-            Verifier[L] ~> Prover
             Prover.(r) ~> Verifier.(r)
             Verifier.verify_round(c, r, p, g)
           else
-            Verifier[R] ~> Prover
             Prover.(rem(:crypto.bytes_to_integer(x) + r, p - 1)) ~> Verifier.(xr_modp)
             Verifier.verify_round(c, xr_modp, y, p, g)
           end

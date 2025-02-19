@@ -1,6 +1,7 @@
 defmodule Tcp.HandlerImpl do
   use Tcp.HandlerChor.Chorex, :handler
 
+  @impl true
   def run({:error, reason}, state) do
     IO.inspect(reason, label: "[handler] error reason")
     {{:halt, ""}, state}
@@ -18,12 +19,15 @@ defmodule Tcp.HandlerImpl do
      %{byte_count: c + len}}
   end
 
+  @impl true
   def continue?({:continue, _resp}, _state), do: true
   def continue?({:halt, _resp}, _state), do: false
   def continue?(:closed, _state), do: false
 
+  @impl true
   def fmt_reply({_status, resp}), do: resp
 
+  @impl true
   def ack_shutdown() do
 	IO.inspect("down", label: "[handler] shutting down")
     nil

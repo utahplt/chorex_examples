@@ -1,6 +1,7 @@
 defmodule Tcp.AccepterPoolImpl do
   use Tcp.ListenerChor.Chorex, :accepterpool
 
+  @impl true
   def accept_and_handle_connection(listen_socket) do
     IO.inspect(listen_socket, label: "[accepter_pool] socket")
 

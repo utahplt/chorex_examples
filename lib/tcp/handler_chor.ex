@@ -11,12 +11,10 @@ defmodule Tcp.HandlerChor do
 
       with Handler.({resp, new_state}) <- Handler.run(msg, state) do
         if Handler.continue?(resp, new_state) do
-          Handler[L] ~> TcpClient
           Handler.fmt_reply(resp) ~> TcpClient.(resp)
           TcpClient.send_over_socket(sock, resp)
           loop(Handler.(new_state), TcpClient.(sock))
         else
-          Handler[R] ~> TcpClient
           Handler.fmt_reply(resp) ~> TcpClient.(resp)
           TcpClient.send_over_socket(sock, resp)
           TcpClient.shutdown(sock)

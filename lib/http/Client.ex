@@ -1,6 +1,7 @@
 defmodule Http.Client do
   use Http.Chor.Chorex, :client
 
+  @impl true
   def get_headers() do
     receive do
       # This has to come in from elsewhere
@@ -9,9 +10,11 @@ defmodule Http.Client do
     end
   end
 
+  @impl true
   def get_body(_max_length) do
   end
 
+  @impl true
   def finish_request(nil) do
     # close request
   end
