@@ -45,7 +45,6 @@ defmodule Zkp.ZkpChor do
         Verifier.(:accept)
         Prover.(:accept)
       else
-
         with Verifier.(good_proof?) <- do_round(Verifier.({p, g, y}), Prover.({p, g, x})) do
           if Verifier.(good_proof?) do
             Verifier.(rounds) ~> Prover.(remaining_rounds)

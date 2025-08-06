@@ -13,9 +13,11 @@ defmodule ChorexExamples.MixProject do
 
   # Run "mix help compile.app" to learn about applications.
   def application do
+    require Logger
+    mod = if System.get_env("DEMO_TCP"), do: TcpServer, else: ZkpLogin
+    Logger.info("Starting up demo for #{mod}")
     [
-      # mod: {TcpServer, []},
-      mod: {ZkpLogin, []},
+      mod: {mod, []},
       extra_applications: [:logger]
     ]
   end

@@ -2,7 +2,7 @@ defmodule ZkpLogin do
   use Application
 
   @impl true
-  def start(_type, _args) do
+  def start(_type \\ nil, _args \\ nil) do
     Zkp.LogVerifier.start_kv_store()
     Zkp.SrpServerImpl.start_kv_store()
     {:ok, self()}
