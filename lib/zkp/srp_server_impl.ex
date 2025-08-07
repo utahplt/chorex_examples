@@ -16,7 +16,6 @@ defmodule Zkp.SrpServerImpl do
 
   @impl true
   def register(ident, salt, token) do
-    {ident, salt, token, @good_n, @good_g}
     :ets.insert_new(@user_tbl, {ident, salt, token, @good_n, @good_g})
   end
 
