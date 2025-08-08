@@ -6,9 +6,11 @@ defmodule Mix.Tasks.Demo.Tcp do
   require Logger
 
   def run(_args) do
-    Logger.info("Starting up the TCP handler...")
-    ChorexExamples.start_server()
-    Logger.info("Started; connect in another terminal window with `nc localhost 4242`")
+    host = System.get_env("HOSTNAME")
+    Logger.info("Started")
+    Logger.info("In another terminal window, connect to this container with")
+    Logger.info("    docker exec -it #{host} bash")
+    Logger.info("And then connect to the socket with `nc 127.0.0.1 4242`")
     IO.gets("Press 'ENTER' to quit")
   end
 end
