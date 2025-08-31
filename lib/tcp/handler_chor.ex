@@ -10,13 +10,11 @@ defmodule Tcp.HandlerChor do
       TcpClient.read(sock) ~> Handler.(msg)
 
       with Handler.({resp, new_state}) <- Handler.run(msg, state) do
+        Handler.fmt_reply(resp) ~> TcpClient.(resp)
+        TcpClient.send_over_socket(sock, resp)
         if Handler.continue?(resp, new_state) do
-          Handler.fmt_reply(resp) ~> TcpClient.(resp)
-          TcpClient.send_over_socket(sock, resp)
           loop(Handler.(new_state), TcpClient.(sock))
         else
-          Handler.fmt_reply(resp) ~> TcpClient.(resp)
-          TcpClient.send_over_socket(sock, resp)
           TcpClient.shutdown(sock)
           Handler.ack_shutdown()
         end
